@@ -1,4 +1,3 @@
-import { languageLabels as turLabels } from './tur.js';
 import { languageLabels as engLabels } from './eng.js';
 import { languageLabels as deuLabels } from './deu.js';
 import { languageLabels as fraLabels } from './fre.js';
@@ -10,8 +9,7 @@ export function getLanguageLabels(lang) {
     case 'deu': return deuLabels;
     case 'fre': return fraLabels;
     case 'rus': return rusLabels;
-    case 'tur':
-    default:    return turLabels;
+    default:    return engLabels;
   }
 }
 
@@ -22,13 +20,12 @@ export function detectBrowserLanguage() {
   for (const raw of candidates) {
     const code = (raw || '').toLowerCase();
     const base = code.split('-')[0];
-    if (code.startsWith('tr') || base === 'tr') return 'tur';
     if (code.startsWith('en') || base === 'en') return 'eng';
     if (code.startsWith('de') || base === 'de') return 'deu';
     if (code.startsWith('fr') || base === 'fr') return 'fre';
     if (code.startsWith('ru') || base === 'ru') return 'rus';
   }
-  return 'tur';
+  return 'eng';
 }
 
 export function getStoredLanguagePreference() {

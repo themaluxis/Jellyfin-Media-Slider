@@ -250,7 +250,7 @@ export function getConfig() {
     dotPreviewPlaybackMode: readDotPreviewMode(),
     preferTrailersInPreviewModal: localStorage.getItem('preferTrailersInPreviewModal') !== 'false',
     onlyTrailerInPreviewModal: localStorage.getItem('onlyTrailerInPreviewModal') === 'true' ? true : false,
-    enabledGmmp: localStorage.getItem('enabledGmmp') !== 'false',
+    enabledGmmp: localStorage.getItem('enabledGmmp') === 'true',
     enableQualityBadges: localStorage.getItem('enableQualityBadges') !== 'false',
     enableTrailerThenVideo: localStorage.getItem('enableTrailerThenVideo') !== 'false',
     disableAllPlayback: localStorage.getItem('disableAllPlayback') === 'true' ? true : false,

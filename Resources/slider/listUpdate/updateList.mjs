@@ -12,7 +12,7 @@ const JELLYFIN_URL = process.env.JELLYFIN_URL;
 const JELLYFIN_TOKEN = process.env.JELLYFIN_TOKEN;
 
 if (!JELLYFIN_URL || !JELLYFIN_TOKEN) {
-  console.error("❌ HATA: JELLYFIN_URL veya JELLYFIN_TOKEN çevre değişkeni eksik!");
+  console.error("❌ ERROR: JELLYFIN_URL or JELLYFIN_TOKEN environment variable is missing!");
   process.exit(1);
 }
 
@@ -25,7 +25,7 @@ async function getActiveSessions() {
     });
     return await response.json();
   } catch (error) {
-    console.error("⛔ Oturum bilgileri alınırken hata:", error.message);
+    console.error("⛔ Error while getting session info:", error.message);
     return [];
   }
 }
@@ -54,7 +54,7 @@ async function fetchAllItems(userId) {
     const dynamicLimit = totalRecords < 1000 ? totalRecords :
                         totalRecords < 5000 ? 1000 : 2000;
 
-    console.log(`ℹ️ [${userId}] Toplam ${totalRecords} içerik, limit: ${dynamicLimit}`);
+    console.log(`ℹ️ [${userId}] Total ${totalRecords} items, limit: ${dynamicLimit}`);
 
     while (startIndex < totalRecords) {
       const response = await fetch(
@@ -96,18 +96,18 @@ async function getRandomContentIds(userId, limit = config.itemLimit) {
 
     const allItems = await fetchAllItems(userId);
     if (allItems.length === 0) {
-      console.warn(`⚠️ [${userId}] Kullanıcısı için içerik bulunamadı`);
+      console.warn(`⚠️ [${userId}] No content found for user`);
       return [];
     }
 
-    console.log(`ℹ️ [${userId}] Garanti limiti: ${minPerType} içerik/tür`);
+    console.log(`ℹ️ [${userId}] Guarantee limit: ${minPerType} items/type`);
     const itemsByType = allItems.reduce((acc, item) => {
       if (!acc[item.Type]) acc[item.Type] = [];
       acc[item.Type].push(item);
       return acc;
     }, {});
 
-    console.log(`📊 [${userId}] İçerik Dağılımı:`,
+    console.log(`📊 [${userId}] Content Distribution:`,
       Object.entries(itemsByType).map(([type, items]) => `${type}: ${items.length}`).join(', '));
     const availableTypes = Object.keys(itemsByType).filter(type => itemsByType[type].length > 0);
     const guaranteedItems = [];
@@ -160,15 +160,15 @@ async function getRandomContentIds(userId, limit = config.itemLimit) {
       return acc;
     }, {});
 
-    console.log(`✅ [${userId}] ${ids.length} içerik seçildi (Dağılım: ${
+    console.log(`✅ [${userId}] ${ids.length} items selected (Distribution: ${
       Object.entries(typeDistribution)
         .map(([type, count]) => `${type}: ${count}`)
         .join(', ')
-    }) | Geçmiş boyutu: ${history.length}/${historyLimit}`);
+    }) | History size: ${history.length}/${historyLimit}`);
 
     return ids;
   } catch (error) {
-    console.error(`⛔ [${userId}] İçerik seçilirken hata:`, error.message);
+    console.error(`⛔ [${userId}] Error selecting content:`, error.message);
     return [];
   }
 }
@@ -176,54 +176,54 @@ async function getRandomContentIds(userId, limit = config.itemLimit) {
 async function updateListFileForUser(userId) {
   const newIds = await getRandomContentIds(userId);
   if (newIds.length === 0) {
-    console.log(`ℹ️ [${userId}] Güncellenecek yeni içerik bulunamadı`);
+    console.log(`ℹ️ [${userId}] No new content to update`);
     return;
   }
 
   const listFilePath = getListFilePath(userId);
   try {
     await fs.promises.writeFile(listFilePath, newIds.join('\n'), 'utf8');
-    console.log(`🔄 [${userId}] Liste dosyası güncellendi (${newIds.length} içerik)`);
+    console.log(`🔄 [${userId}] List file updated (${newIds.length} items)`);
   } catch (error) {
-    console.error(`⛔ [${userId}] Dosya yazma hatası:`, error.message);
+    console.error(`⛔ [${userId}] File write error:`, error.message);
   }
 }
 
 async function updateListFilesForActiveUsers() {
   try {
-    console.log("\n=== Liste Güncelleme Başlatıldı ===");
+    console.log("\n=== List Update Started ===");
     const sessions = await getActiveSessions();
 
     if (sessions.length === 0) {
-      console.log("ℹ️ Aktif kullanıcı bulunamadı");
+      console.log("ℹ️ No active users found");
       return;
     }
 
-    console.log(`👥 ${sessions.length} aktif kullanıcı tespit edildi`);
+    console.log(`👥 ${sessions.length} active users detected`);
     for (const session of sessions) {
       await updateListFileForUser(session.UserId);
     }
-    console.log("=== Liste Güncelleme Tamamlandı ===\n");
+    console.log("=== List Update Completed ===\n");
   } catch (error) {
-    console.error("⛔ Liste güncelleme hatası:", error.message);
+    console.error("⛔ List update error:", error.message);
   }
 }
 
 updateListFilesForActiveUsers().catch(error => {
-  console.error("⛔ Başlangıç güncelleme hatası:", error.message);
+  console.error("⛔ Initial update error:", error.message);
 });
 
 const interval = setInterval(updateListFilesForActiveUsers, config.listRefresh || 300000);
 
 
 process.on('SIGTERM', () => {
-  console.log("🛑 SIGTERM alındı - Kapatılıyor...");
+  console.log("🛑 SIGTERM received - Closing...");
   clearInterval(interval);
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log("🛑 SIGINT alındı - Kapatılıyor...");
+  console.log("🛑 SIGINT received - Closing...");
   clearInterval(interval);
   process.exit(0);
 });
